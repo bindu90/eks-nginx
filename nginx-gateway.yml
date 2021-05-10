@@ -1,0 +1,66 @@
+########################################
+# Destination Rule
+########################################
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: nginx
+spec:
+  host: nginx-svc
+  subsets:
+  - name: v2
+    labels:
+      app: nginx
+      version: "2"
+  - name: v1
+    labels:
+      app: nginx
+      version: "1"
+
+---
+########################################
+# Gateway
+########################################
+
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: nginx-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      name: http
+      number: 80
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+########################################
+# VirtualService
+########################################
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - nginx-gateway
+  http:
+  - route:
+    - destination:
+        host: nginx-svc
+        port:
+          number: 80
+        subset: v2
+      weight: 50
+    - destination:
+        host: nginx-svc
+        port:
+          number: 80
+        subset: v1
+      weight: 50
+
